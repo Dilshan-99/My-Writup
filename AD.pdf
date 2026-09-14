@@ -1,0 +1,643 @@
+
+### **1. What is Active Directory (AD)?**
+
+Think of Active Directory as a **"Digital Phonebook and Security Guard"** for a company's computer network. It is a service created by Microsoft to manage all users, computers, and resources in a Windows-based environment.
+
+### **2. What does it actually do?**
+
+- **Authentication:** It verifies who you are when you log in with your username and password.
+    
+- **Authorization:** It controls what you can see or do. (e.g., Can you access the printer? Can you open the "Finance" folder?)
+    
+- **Centralized Management:** Instead of setting up each computer one by one, an IT admin can change settings for all 500+ computers in the company at once from the AD server.
+    
+
+### **3. Why do Hackers target AD?**
+
+- **Market Share:** About 43% of organizations use AD. If you learn how to hack AD, you can hack almost any company.
+    
+- **Misconfigurations:** AD is huge and complicated. Admins often make small mistakes (like weak passwords or incorrect permissions) that hackers can use to sneak in.
+    
+- **Privilege Escalation:** A hacker might start as a "regular employee" and, by exploiting AD flaws, gain "Domain Admin" rights—the "God mode" of the entire network.
+    
+
+### **4. Key Concept: "Domain"**
+
+In AD, all the computers and users managed by the same AD server belong to a **Domain** (e.g., `company.local`). Once you gain control of the "Domain Controller" (the main brain of the AD), you own the entire network.
+
+### **Summary**
+
+- **AD** = The brain of a company's network.
+    
+- **Domain Admin** = The person (or hacker) who controls the brain.
+    
+- **Our Goal** = To find small mistakes (misconfigurations) in AD, move through the network, and eventually take control of the whole domain.
+
+### **1. Why do we need these tools?**
+
+Active Directory is complex, so we use specific tools to help us find "hidden" information, map out the network, and test for vulnerabilities. You will work with these tools on both Windows and Linux attack hosts.
+
+### **2. Important Categories of Tools**
+
+- **Mapping and Enumeration (Finding the target):**
+    
+    - **PowerView / SharpView**: Used to gather information about users, groups, and computers.
+        
+    - **BloodHound / SharpHound**: Used to create a visual map of AD relationships and identify potential attack paths.
+        
+    - **enum4linux / ldapsearch**: Essential for pulling data from the AD environment.
+        
+- **Attacking and Exploiting (Testing for weaknesses):**
+    
+    - **Impacket Toolkit**: A massive collection of scripts (like `psexec.py`, `secretsdump.py`) for interacting with network protocols and attacking AD.
+        
+    - **Kerbrute / DomainPasswordSpray**: Tools designed to test for weak passwords without locking out accounts.
+        
+    - **Mimikatz**: A powerful tool used to extract passwords and Kerberos tickets from a host's memory.
+        
+    - **Responder**: Used to poison network protocols (like LLMNR) to capture user hashes.
+        
+- **Post-Exploitation (What to do after getting in):**
+    
+    - **CrackMapExec (CME)**: A versatile toolkit for performing various attacks and enumeration tasks.
+        
+    - **Evil-WinRM**: Provides an interactive shell on a host over the WinRM protocol.
+        
+    - **Snaffler**: Helps you find sensitive information like credentials on file shares.
+        
+
+### **3. Essential Lab Tips**
+
+- **Where to find them:** On Windows, check the `C:\Tools` directory. On Linux, check the `/opt` directory.
+    
+- **Safety First:** It is encouraged to learn how to compile tools yourself to ensure they are safe and to understand how they work.
+    
+- **Think Outside the Box:** AD is huge, and no single tool does everything. Success comes from combining information from multiple tools to find a path to the target.
+    
+
+**Summary:** You don't need to memorize every tool right now. As you move through the lab sections, you will naturally learn which tool to reach for in specific situations.
+
+### **1. What is a Scoping Document?**
+
+It is a formal agreement between a security company and a client. It clearly defines what you are allowed to test and what you must leave alone.
+
+### **2. Why is it important?**
+
+In professional security testing, you cannot just hack anything you want. A scoping document protects you from legal trouble and ensures the client knows exactly what parts of their network you are testing.
+
+### **3. Key Parts of the Document**
+
+- **In Scope (What to test)**:
+    
+    - The specific domains (e.g., `INLANEFREIGHT.LOCAL`).
+        
+    - The specific IP range (e.g., `172.16.5.0/23`).
+        
+- **Out of Scope (What to ignore)**:
+    
+    - Any systems not explicitly listed.
+        
+    - Real-world websites (unless otherwise permitted).
+        
+    - Phishing or social engineering (tricking employees).
+        
+- **Rules of Engagement (The "How-To")**:
+    
+    - **Passive Enumeration**: Using public internet data without scanning the target.
+        
+    - **Internal Testing**: Acting as an "untrusted insider" to find vulnerabilities.
+        
+    - **Password Testing**: Handling captured password files securely and keeping them private.
+        
+
+### **Summary**
+
+Think of the scoping document as your **"Permission Slip"**. It gives you the "green light" to test specific areas while setting strict boundaries to ensure the company's daily operations are not interrupted. Always read this document carefully before starting any engagement!
+
+### **1. What is External Reconnaissance?**
+
+It is the process of gathering publicly available information about a target before starting a penetration test. It is a passive activity, meaning you observe and collect data without actively scanning or attacking the target's live systems.
+
+### **2. Why do we do it?**
+
+- **Validation**: To confirm the information provided in the scoping document.
+    
+- **Understanding**: To get "the lay of the land" and see how the organization is configured.
+    
+- **Finding Leaks**: To discover publicly accessible information, such as leaked credentials or internal documents, which can help you gain a foothold during the test.
+    
+
+### **3. What are we looking for?**
+
+- **IP Space & ASN**: Identifying the infrastructure and hosting providers.
+    
+- **Domain Information**: Finding mail servers, DNS records, and subdomains.
+    
+- **Schema Format**: Determining naming conventions for usernames and email addresses.
+    
+- **Data Disclosures**: Searching for public files (.pdf, .docx, etc.) that might contain internal links or metadata.
+    
+- **Breach Data**: Using sources like _HaveIBeenPwned_ or _Dehashed_ to find if any corporate credentials have appeared in past data breaches.
+    
+
+### **4. Where do we look?**
+
+- **DNS Records**: Using tools like _domaintools_ or _viewdns.info_.
+    
+- **Social Media**: Checking LinkedIn or similar sites to learn about the company's structure and software versions (which helps identify potential vulnerabilities).
+    
+- **Cloud & Dev Storage**: Using tools like _Trufflehog_ to find credentials accidentally left in public repositories like GitHub or S3 buckets.
+    
+
+### **5. Key Principles**
+
+- **Passive First**: Always start with passive enumeration (gathering existing data) before moving to active enumeration.
+    
+- **Stay in Scope**: Ensure you only interact with infrastructure defined in your scoping document. If you are unsure if a host is in-scope, ask for clarification before taking action.
+    
+- **Iterative Process**: Enumeration is a repeating process; if you get stuck during the test, go back to your initial reconnaissance to see if you missed anything.
+
+### **1. The Goal**
+
+Now that you have access to an internal "attack host," the objective is to move from "blind" discovery to gaining a **foothold**. A foothold is typically a valid domain user account or SYSTEM-level access on a computer.
+
+### **2. The Step-by-Step Process**
+
+- **Listen (Passive)**: Use tools like **Wireshark** or **tcpdump** to "listen" to network traffic. This helps you identify active hosts and network setups without sending any "noisy" packets that might alert defenders.
+    
+- **Sweep (Active)**: Use **fping** to quickly ping the network and see which IP addresses are "alive" and responding.
+    
+- **Scan (Mapping)**: Use **Nmap** to identify what services (like DNS, SMB, LDAP, or Kerberos) are running on those live hosts. This helps you find Domain Controllers or potentially vulnerable legacy systems.
+    
+- **User Enumeration**: Use **Kerbrute** to guess valid usernames against the Domain Controller. Since Kerberos pre-authentication failures often do not trigger alerts, this is a stealthy way to build a list of targets for later password attacks.
+    
+
+### **3. Important Considerations**
+
+- **Identify Legacy Systems**: Look for old operating systems (like Windows Server 2008). These are often "quick wins" because they may have known vulnerabilities that allow you to gain full SYSTEM access.
+    
+- **Mind the Noise**: If you are performing a "non-evasive" test, you can be noisy. However, in "evasive" engagements, you must be careful, as aggressive scanning (like full Nmap sweeps) can trigger security alarms.
+    
+- **Safety First**: Before running aggressive scans or exploits, always check if they could crash sensitive industrial equipment or production services. Get approval in writing.
+    
+
+### **Summary**
+
+Internal enumeration is an **iterative process**. You gather information, regroup, analyze what you found, and then decide on the next step to get that initial domain user account.
+
+### **Quick Note: LLMNR/NBT-NS Poisoning**
+
+#### **What is it?**
+
+When a Windows computer cannot find a server using DNS, it asks everyone on the local network: _"Who is [Server Name]?"_ (This is LLMNR/NBT-NS). We can pretend to be that server and "poison" the network.
+
+#### **How the Attack Works:**
+
+1. **Request:** A user makes a typo (e.g., `\\printer01` instead of `\\print01`). DNS fails.
+    
+2. **Broadcast:** The computer broadcasts: _"Does anyone know where `\\printer01` is?"_
+    
+3. **Poisoning:** You (running **Responder**) reply: _"I am `\\printer01`!"_
+    
+4. **Capture:** The user's computer tries to "log in" to your machine. In that process, it sends an **NTLMv2 Hash** of the user's password to you.
+    
+
+#### **Steps to Perform:**
+
+- **Step 1 (Sniffing):** Run `sudo responder -I eth0 -wrf`. This listens and automatically poisons requests.
+    
+- **Step 2 (Capture):** Wait for a user to trigger a request. The hash will appear in your console and be saved in `/usr/share/responder/logs/`.
+    
+- **Step 3 (Cracking):** Use **Hashcat** to turn that hash into a cleartext password.
+    
+    - Command: `hashcat -m 5600 [hash_file] [wordlist_file]`
+        
+
+#### **Key Tools:**
+
+- **Responder:** The main tool to act as the "fake" server.
+    
+- **Hashcat:** Used to crack the captured NTLMv2 hashes.
+    
+- **SMB Signing:** The main defense. If this is "Required" on the server, the attack fails because the server won't trust the spoofed response.
+    
+
+#### **Key Takeaway for your Lab:**
+
+- Always run Responder as **root** (`sudo`).
+    
+- Check the logs (`/usr/share/responder/logs`) if you don't see the hash on the screen.
+    
+- Use `rockyou.txt` for your wordlist when cracking.
+
+### **Note: LLMNR/NBT-NS Poisoning & Hash Cracking**
+
+**1. The Concept:** In a Windows network, if a computer fails to find a resource (like a file share) using standard DNS, it broadcasts a request using protocols called **LLMNR** or **NBT-NS**. An attacker can "poison" these requests by falsely claiming, "I am the computer you are looking for."
+
+**2. The Attack (Inveigh):**
+
+- **Spoofing:** When the target computer sends out a broadcast request, the attacker's tool (Inveigh) intercepts it and replies, pretending to be the requested server.
+    
+- **Capture:** The target computer then attempts to authenticate with the attacker's machine, sending its **NTLMv2 hash** (a cryptographic representation of the user's password) over the network.
+    
+- **Collection:** Tools like **Inveigh** capture these hashes, which can then be cracked offline.
+    
+
+**3. Offline Cracking:**
+
+- Once we have the hash, we don't need the actual password to access the system yet. We use a tool called **Hashcat** to compare the captured hash against a dictionary of common passwords (like `rockyou.txt`).
+    
+- If a match is found, Hashcat reveals the **cleartext password**.
+    
+
+**4. Why this matters:** This is a common "low-hanging fruit" attack in internal penetration testing. It shows that even a small misconfiguration in a Windows network can lead to full user credential compromise.
+
+**Key Terms:**
+
+- **LLMNR/NBT-NS:** Name resolution protocols used when DNS fails.
+    
+- **NTLMv2 Hash:** A hashed format of a user's password used for Windows authentication.
+    
+- **Inveigh:** A tool used to perform Man-in-the-Middle (MitM) attacks by spoofing responses.
+    
+- **Hashcat:** A password recovery tool used to crack the intercepted hashes.
+
+### **Note: What is Password Spraying?**
+
+**1. The Basics:** Password spraying is a technique used by attackers to gain access to user accounts. Unlike a "Brute Force" attack (which tries many passwords on _one_ account), password spraying tries **one common password** across **many different accounts**.
+
+**2. How it works:**
+
+- **Gathering Usernames:** The attacker collects a list of valid usernames (e.g., from public company documents or social media).
+    
+- **The "Spray":** The attacker tries one popular password (like `Winter2022` or `Welcome1`) on all these usernames at once.
+    
+- **The Delay:** To avoid triggering security alerts or "locking out" accounts, the attacker waits for a set time (a delay) between each attempt.
+    
+
+**3. Why it is dangerous:**
+
+- **Hard to detect:** Because it only makes a few login attempts per account, it often stays "under the radar" of standard security monitoring.
+    
+- **Effective:** In large companies, many people use weak or predictable passwords. If just one person uses the "sprayed" password, the attacker gets a "foothold" inside the network.
+    
+
+**4. Prevention & Protection:**
+
+- **Password Policy:** Organizations set rules (like locking an account after 5 failed attempts) to stop attackers.
+    
+- **MFA (Multi-Factor Authentication):** This is the best defense. Even if an attacker guesses the password, they still cannot log in without the second factor (like a code on a phone).
+    
+- **Security Awareness:** Encouraging employees to use strong, unique passwords.
+    
+
+**Summary:** Password spraying is like trying one "master key" on a hundred different doors, hoping one of them opens. It is a "low and slow" attack that relies on common human behavior—using easy-to-remember passwords.
+
+### **Note: Enumerating Password Policies**
+
+**1. The Main Goal:** Before you start guessing passwords (Password Spraying), you **must** know the rules of the network (the Password Policy). If you guess too many times, you will lock users out of their accounts, which causes massive problems in a real penetration test.
+
+**2. Key Policy Settings to Look For:** When you pull the policy, you want to find three main things:
+
+- **Minimum Password Length:** The shortest password allowed (e.g., 8 characters). This tells you how long your guessed passwords need to be.
+    
+- **Account Lockout Threshold:** How many wrong guesses are allowed before the account locks (e.g., 5 bad attempts).
+    
+- **Lockout Duration:** How long the account stays locked before it resets (e.g., 30 minutes).
+    
+
+**3. How to Find the Policy (Tools):** Depending on your access, you can use different methods to pull this information:
+
+- **From Linux (If you have a username/password):** Use tools like `CrackMapExec` or `rpcclient`.
+    
+- **From Linux (If you have NO username/password):** Look for security flaws like **SMB NULL Sessions** or **LDAP Anonymous Binds**. You can use tools like `enum4linux`, `enum4linux-ng`, or `ldapsearch`.
+    
+- **From Windows:** Use built-in Windows commands like `net accounts` or PowerShell scripts like `PowerView`.
+    
+
+**4. The Golden Rule:** _Never lock out accounts!_ If the lockout threshold is 5, you should only try 2 or 3 passwords, and then wait for the duration timer (e.g., 30 minutes) to reset before trying again.
+
+### **💡 Tip for Question 2:**
+
+The reason your answer might have been incorrect is that you probably used the number from the _example_ in the text. The text uses an example IP (`172.16.5.5`) where the length is `8`.
+
+However, your actual target is **`10.129.35.159`**. To get the correct answer for Question 2, you need to run one of the enumeration tools against your specific target.
+
+### **Note: Making a Target User List for Password Spraying**
+
+Before you can try guessing passwords (Password Spraying), you need a list of **valid usernames** on the network.
+
+### **1. Why do we need a User List?**
+
+- If you guess passwords using random usernames, you will fail or cause suspicious activity.
+    
+- Having a real list of users allows you to target actual accounts safely.
+    
+
+### **2. Ways to Gather Usernames (Without a Password)**
+
+- **SMB NULL Session:** If the server is misconfigured, you can connect with no username or password using tools like `enum4linux` or `rpcclient` to download the full user list.
+    
+- **LDAP Anonymous Bind:** This lets you query the server database anonymously using tools like `ldapsearch` or `windapsearch` to pull user accounts.
+    
+- **Kerbrute (The Best Method):** This tool tests a list of common names (a wordlist) against the server using Kerberos.
+    
+
+### **3. Why is Kerbrute Special?**
+
+- **Super Fast:** It can check tens of thousands of usernames in just a few seconds.
+    
+- **100% Safe from Lockouts:** It only asks the server, _"Does this user exist?"_ It does **not** type a wrong password, so it **will never lock out** any user accounts during this stage.
+    
+
+### **How to solve your current question:**
+
+To find out how many valid users are in this domain using Kerbrute, run this exact command in your terminal:
+
+Bash
+
+kerbrute userenum -d inlanefreight.local --dc 172.16.5.5 /opt/jsmith.txt
+
+At the very end of the scan, look for a line that says something like: `Done! Discovered X valid usernames`
+
+### **Note: Internal Password Spraying from Linux**
+
+**1. What is Password Spraying?**
+
+- Instead of trying many passwords against _one_ user (which locks the account), you try **one common password** (like `Welcome1`) against **many different users**.
+    
+- This is a smart way to find weak accounts without triggering account lockouts.
+    
+
+**2. Tools Used from Linux:**
+
+- **`rpcclient`:** Can be used with a Bash loop to test users. A successful login shows the domain's "Authority Name."
+    
+- **`CrackMapExec (CME)`:** A very popular tool. You give it a text file of usernames and one password. You can filter the results using `grep +` to see only successful logins.
+    
+- **`Kerbrute`:** Uses Kerberos authentication. It is incredibly fast and efficient for spraying passwords.
+    
+
+**3. Local Administrator Password Reuse:**
+
+- Often, companies use the exact same password for the "Local Administrator" account on every computer.
+    
+- If you find the password or NTLM hash of one local admin, you can use `CrackMapExec` with the `--local-auth` flag to "spray" it across the entire network to see which other computers you can control (marked as `Pwn3d!`).
+
+## Active Directory: Internal Password Spraying
+
+### 1. What is Password Spraying?
+
+Instead of trying many different passwords on a single account (which causes the account to get locked), **Password Spraying** tries **one common password** (like `Welcome1`) across **many user accounts**.
+
+- **The Goal:** To find a valid account without triggering the system's account lockout defenses.
+    
+
+### 2. The Attack Tool: DomainPasswordSpray.ps1
+
+If you are logged into a Windows machine that is connected to the Domain, you can use a PowerShell tool called `DomainPasswordSpray.ps1`.
+
+- **How it works:** It automatically pulls a list of all domain users, checks the password policy, and removes users who are 1 attempt away from locking out. Then, it safely tests the password.
+    
+- **The Command:**
+PowerShell
+Invoke-DomainPasswordSpray -Password Welcome1 -OutFile spray_success
+
+### 3. How to Defend Against It (Mitigations) No single fix stops this completely, but these steps make it very difficult: * **Multi-factor Authentication (MFA):** Require a secondary check, like an OTP or phone push notification. * **Restrict Access:** Only give users access to the systems they absolutely need for their job. * **Separate Admin Accounts:** Administrators should use a standard account for daily tasks and a separate privileged account only for admin work. * **Password Hygiene:** Block common words/seasons (like `Winter2022`) from being used as passwords. ### 4. How to Detect the Attack System Administrators can catch this attack by looking for specific logs: * **Event ID 4625:** An account failed to log on. (Seeing many of these in a short time is a big clue). * **Event ID 4771:** Kerberos pre-authentication failed (used to spot LDAP-based sprays). * Sudden spikes in account lockouts. --- ### 🎯 Your Lab Task Instructions To find the answer to your specific question, follow these steps: 1. **Log In:** Use Remote Desktop (RDP) to connect to `10.129.35.162`. * **Username:** `htb-student` * **Password:** `Academy_student_AD!` 2. **Open PowerShell** and load the tool by typing: ```powershell Import-Module .\DomainPasswordSpray.ps1
+
+
+## Understanding Security Controls in Active Directory
+
+After getting initial access to a network, you need to identify the security measures protecting the domain. This helps you choose the right tools and avoid being detected.
+
+### 1. Windows Defender
+
+This is the built-in antivirus for Windows. If it is enabled, it will block most hacking tools.
+
+- **How to check:** Run `Get-MpComputerStatus`.
+    
+- **Look for:** `RealTimeProtectionEnabled: True` (means it is active).
+    
+
+### 2. AppLocker
+
+This is a whitelist that only allows approved programs to run. Often, it is used to block `powershell.exe` or `cmd.exe`.
+
+- **How to check:** Run `Get-AppLockerPolicy -Effective`.
+    
+- **Workaround:** Sometimes, it only blocks the main location of PowerShell, so you can try running it from a different folder (like `SysWOW64`).
+    
+
+### 3. PowerShell Constrained Language Mode
+
+This mode limits PowerShell's power by blocking advanced features, making it harder to run scripts and exploit tools.
+
+- **How to check:** Run `$ExecutionContext.SessionState.LanguageMode`.
+    
+- **Look for:** `ConstrainedLanguage` (means your access is restricted).
+    
+
+### 4. LAPS (Local Administrator Password Solution)
+
+LAPS prevents "lateral movement" by giving every computer a unique, random local administrator password that changes automatically.
+
+- **How it works:** It stores these passwords in Active Directory.
+    
+- **The Goal:** As an attacker, you want to see if your user account has permission to read these LAPS passwords.
+    
+- **Tools:** You can use `LAPSToolkit` to find out which groups or users can read these passwords.
+    
+
+### Summary Table
+
+|Security Control|Purpose|How to check|
+|---|---|---|
+|**Windows Defender**|Blocks malicious software/tools|`Get-MpComputerStatus`|
+|**AppLocker**|Only allows approved programs|`Get-AppLockerPolicy -Effective`|
+|**Constrained Language**|Limits PowerShell capabilities|`$ExecutionContext.SessionState.LanguageMode`|
+|**LAPS**|Randomizes local admin passwords|`LAPSToolkit`|
+
+### **Credentialed Enumeration from Linux**
+
+Once you have a valid set of domain credentials (username and password), you can move from "guessing" to "mapping" the internal network. You will use these tools from your Linux attack host to gather detailed information about the domain.
+
+#### **1. CrackMapExec (CME) / NetExec**
+
+The most important tool for assessing Active Directory.
+
+- **Purpose:** To quickly enumerate users, groups, and find files.
+    
+- **Key Flags:**
+    
+    - `--users`: List all domain users.
+        
+    - `--groups`: List all domain groups.
+        
+    - `--shares`: Find available network folders (shares) and your access level (Read/Write).
+        
+    - `-M spider_plus`: Automatically search through shares to find sensitive files (like configuration files or passwords).
+        
+
+#### **2. SMBMap**
+
+A great tool for exploring SMB shares.
+
+- **Purpose:** To check what folders you can access and to download/upload files.
+    
+- **Command:** `smbmap -u <user> -p <pass> -H <IP> -R` (The `-R` flag lists directories recursively).
+    
+
+#### **3. rpcclient**
+
+Connects to the domain via the RPC protocol.
+
+- **Purpose:** To get deep information about specific users using their **RID** (Relative Identifier).
+    
+- **Key Command:** `enumdomusers` lists all users and their RIDs. You can then use `queryuser <RID>` to see details like when a password was last changed.
+    
+
+#### **4. Impacket Toolkit**
+
+A collection of Python scripts used for "Lateral Movement" (taking control of other machines).
+
+- **psexec.py:** Uploads a service to the target and gives you a full `SYSTEM` shell. (Very powerful, but easy to detect).
+    
+- **wmiexec.py:** Runs commands through WMI. It is stealthier than `psexec` because it doesn't leave files on the target host.
+    
+
+#### **5. Windapsearch**
+
+A script that uses LDAP to query the Domain Controller.
+
+- **Purpose:** Useful for finding specific objects like computers, groups, or users with special privileges without needing heavy tools.
+    
+
+### **Important Workflow Tip**
+
+Always save the output of these tools into files (e.g., `> output.txt`). As you enumerate, look for:
+
+1. **Privileged Users:** Administrators or service accounts that you can target next.
+    
+2. **Sensitive Files:** Documents in shares that might contain cleartext passwords.
+    
+3. **Logged-in Users:** Servers where an Admin is currently logged in, allowing you to steal their session.
+
+### **Overview**
+
+The goal of this section is to map out an Active Directory (AD) domain once you have a foothold (a valid user account). By "enumerating" (gathering information), you identify high-value targets, such as Domain Admins or servers with sensitive data.
+
+### **The Workflow (Step-by-Step)**
+
+1. **Preparation:** You need valid domain credentials (a username and password). Without these, most of these tools will not work.
+    
+2. **Enumeration (Finding Targets):**
+    
+    - **Users & Groups:** Use tools to see who is in the domain and who has special (Admin) rights.
+        
+    - **Logged-on Users:** Identify where high-privileged users are currently logged in.
+        
+    - **Shares:** Scan for folders containing sensitive files (like passwords or configurations).
+        
+3. **Exploitation (Taking Action):** Use the gathered information to connect to other machines and gain control.
+    
+
+### **Toolbox Summary**
+
+|**Tool**|**Purpose**|**Key Function**|
+|---|---|---|
+|**CrackMapExec**|The "Swiss Army Knife"|Fast enumeration of users, groups, and shares. Checks for "Pwn3d!" (local admin access).|
+|**SMBMap**|Share Finder|Lists and explores accessible folders/files on remote servers.|
+|**RPCClient**|Deep Look|Uses MS-RPC to query user details, RIDs, and domain information.|
+|**Impacket**|Execution|Uses `psexec.py` or `wmiexec.py` to run commands on other computers.|
+|**Windapsearch**|LDAP Search|Specifically uses LDAP to query the Active Directory database.|
+
+### **Credentialed Enumeration (Windows Environment)**
+
+When you have a valid username and password, you can use "Credentialed Enumeration" to get more detailed information from an Active Directory (AD) domain. This helps in finding ways to move through the network.
+
+#### **1. Key Tools**
+
+- **Active Directory PowerShell Module:** A built-in Windows tool. It is "stealthy" because it uses native commands.
+    
+    - _Usage:_ `Import-Module ActiveDirectory`
+        
+    - _Command:_ `Get-ADDomain`, `Get-ADGroupMember`
+        
+- **PowerView / SharpView:** Powerful scripts for situational awareness. They help find where users are logged in, check for admin access, and identify sensitive shares.
+    
+- **Snaffler:** An automated tool that scans file shares to find sensitive files like passwords, SSH keys, or configuration files (`.kdb`, `.key`).
+    
+
+#### **2. Why do we do this?**
+
+- **Find High-Value Targets:** Identify who is in the "Domain Admins" or "Backup Operators" groups.
+    
+- **Map Trust Relationships:** See if your current domain trusts other domains (this helps in moving between domains).
+    
+- **Pillaging:** Searching for sensitive data in shared folders that might contain credentials.
+    
+
+#### **3. Simple Workflow**
+
+1. **Load Modules:** Import the necessary tools (`Import-Module`).
+    
+2. **Gather Info:** Use commands to list users, groups, and trusts.
+    
+3. **Search:** Use **Snaffler** to find interesting files in shares.
+    
+4. **Test Access:** Use `Test-AdminAccess` to see which computers you can control.
+
+### **Active Directory (AD) Enumeration Note**
+
+When testing a Windows network, we use these tools to find information about users, computers, and groups. This helps us understand the network and find ways to get higher access (Privilege Escalation).
+
+#### **1. Active Directory PowerShell Module**
+
+- **What it is:** Built-in Windows tools for managing AD.
+    
+- **Why use it:** It’s already on most systems, so it’s "stealthy" (less likely to be blocked by security).
+    
+- **Key commands:** * `Get-ADDomain`: Gets general domain information.
+    
+    - `Get-ADUser`: Finds specific users (useful for finding accounts with SPNs for Kerberoasting).
+        
+    - `Get-ADTrust`: Checks connections between different domains.
+        
+    - `Get-ADGroupMember`: Shows who is in a specific group (e.g., "Domain Admins").
+        
+
+#### **2. PowerView & SharpView**
+
+- **What it is:** Powerful scripts designed specifically for "situational awareness" in AD.
+    
+- **Why use it:** They make finding things like local admin access or user login locations very easy.
+    
+- **Note:** If PowerShell is blocked, use **SharpView** (the .NET version).
+    
+
+#### **3. BloodHound**
+
+- **What it is:** A tool that uses graphs to visualize AD.
+    
+- **Why use it:** It is the best tool for finding the "shortest path" to become a Domain Admin. It maps out how users, groups, and computers are connected.
+    
+- **Process:** Gather data with **SharpHound** -> Load it into **BloodHound** -> View the "Attack Paths."
+    
+
+#### **4. Snaffler**
+
+- **What it is:** A "hunter" tool for files.
+    
+- **Why use it:** It searches through network file shares for sensitive data like passwords, SSH keys, or configuration files that people left behind.
+    
+- **Command:** `Snaffler.exe -d domain.local -s -o log.txt`
+    
+
+### **Quick Summary Table**
+
+|**Tool**|**Main Purpose**|
+|---|---|
+|**AD PowerShell**|Basic enumeration (using built-in Windows features).|
+|**PowerView**|Deep discovery of users, shares, and ACLs.|
+|**BloodHound**|Visualizing complex "Attack Paths" to Admin.|
+|**Snaffler**|Finding sensitive files/passwords on file shares.|
